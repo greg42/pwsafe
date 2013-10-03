@@ -11,10 +11,10 @@ import           Config (Config)
 import qualified Action
 import           Cipher (Cipher)
 
-run :: Config -> (FilePath -> Cipher) -> Handle -> [String] -> IO ()
+run :: Config -> ([String] -> FilePath -> Cipher) -> Handle -> [String] -> IO ()
 run conf cipher h args = do
   opts <- Options.get args
-  let c = cipher $ Options.databaseFile opts
+  let c = cipher (Options.gpgOptions opts) (Options.databaseFile opts)
       runAction = Action.runAction (Action.mkEnv conf c h)
   case Options.mode opts of
     Help        ->            Options.printHelp

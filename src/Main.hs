@@ -10,4 +10,4 @@ import           Run (run)
 main :: IO ()
 main = do
   args <- getArgs
-  run defaultConfig (Cipher.gpgCipher []) stdout args
+  run defaultConfig (Cipher.gpgCipher) stdout args

@@ -141,3 +141,4 @@ Command line options
                                 this option is to be used with --add
       -n NUMBER                 copy password n times to clipboard;
                                 defaults to 1
+      -g GPG Option             add a GPG option (repeat to add multiple)

@@ -80,7 +80,8 @@ If you want to log in to niftyservice again, proceed as follows.
 
     At this point, pwsafe has opened the website that corresponds to the entry
     in your default web browser. To configure your default web browser, consult
-    the documentation of xdg-open and update-alternatives.
+    the documentation of xdg-open and update-alternatives. If you do not want
+    pwsafe to open your browser, please supply the -d option.
 
  2. Switch to your browser window and navigate to the login page.
 
@@ -143,3 +144,5 @@ Command line options
                                 defaults to 1
                  --password-only  only copy password to clipboard
       -g GPG Option             add a GPG option (repeat to add multiple)
+      -d                        don't open a browser when using -q
+

@@ -92,8 +92,8 @@ add url_ mUser = do
           Left err  -> error err
           Right db_ -> saveDatabase db_
 
-query :: String -> Int -> Bool -> ActionM ()
-query kw n passwordOnly = do
+query :: String -> Int -> Bool -> Bool -> ActionM ()
+query kw n passwordOnly noOpen = do
   db <- openDatabase
   case Database.lookupEntry db kw of
     Left err -> putStrLn err
@@ -101,7 +101,7 @@ query kw n passwordOnly = do
       unless passwordOnly $ do
         forM_ (entryUrl x) $ \url -> do
           putStrLn url
-          open url
+          unless noOpen $ open url
         forM_ (entryUser x)
           copyToClipboard
       forM_ (entryPassword x) $

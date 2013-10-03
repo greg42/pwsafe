@@ -17,6 +17,7 @@ data Options = Options {
   , repeatCount   :: Maybe Int
   , passwordOnly  :: Bool
   , gpgOptions    :: [String]
+  , dontOpen      :: Bool
   } deriving Show
 
 defaultOptions :: Options
@@ -27,6 +28,7 @@ defaultOptions  = Options {
   , repeatCount   = Nothing
   , passwordOnly  = False
   , gpgOptions    = []
+  , dontOpen      = False
   }
 
 options :: [OptDescr (Options -> Options)]
@@ -46,6 +48,7 @@ options = [
   , Option []     ["password-only"]
                               (NoArg  (\  opts -> opts { passwordOnly = True}))       "only copy password to clipboard"
   , Option ['g']  []          (ReqArg (\s opts -> opts { gpgOptions = (gpgOptions opts) ++ [s]}) "GPG Option") "add a GPG option (repeat to add multiple)"
+  , Option ['d']  []          (NoArg  (\  opts -> opts { dontOpen = True })) "don't open a browser when using -q"
   ]
 
 defaultDatabaseFile :: IO String

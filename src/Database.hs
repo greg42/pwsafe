@@ -1,8 +1,10 @@
-module Database (Database, empty, parse, render, addEntry, Entry(..), lookupEntry, hasEntry, entryNames) where
+module Database (Database, empty, parse, render, addEntry, Entry(..), lookupEntryUser, hasEntry, entryNames) where
 
 import           Prelude hiding (lookup)
 
-import           Data.List (intercalate)
+import           Data.List (intercalate, sort)
+import           Data.String.Utils
+import           Data.Maybe
 import           Control.DeepSeq
 import           Text.Printf (printf)
 
@@ -26,20 +28,55 @@ newtype Database = Database { config :: Config }
 empty :: Database
 empty = Database Config.empty
 
-lookupEntry :: Database -> String -> Either String Entry
+lookupEntry :: Database -> String -> Either String [Entry]
 lookupEntry db s = case match s $ entryNames db of
   None        -> Left "no match"
-  Ambiguous l -> Left $ printf "ambiguous, could refer to:\n  %s" $ intercalate "\n  " l
-  Match name  -> entry
+  Ambiguous l -> Left  $ printf "ambiguous, could refer to:\n  %s" $ intercalate "\n  " l
+  Match name  -> Right $ getEntries db name
+
+lookupEntryUser :: Database -> String -> Maybe String -> Either String [Entry]
+lookupEntryUser db s mUser =
+  case entries of
+     Left _  -> entries
+     Right l -> Right $ maybe l (maybeToList . findUser l) mUser
+  where entries = lookupEntry db s
+
+getEntries :: Database -> String -> [Entry]
+getEntries db name = 
+  map makeEntry $ zip3 users passwords urls
     where
-      entry = do
-        return Entry {
-            entryName = name
-          , entryUser = lookup "user"
-          , entryPassword = lookup "password"
-          , entryUrl = lookup "url"
-          }
-      lookup k = Config.lookup name k (config db)
+      knownKeys    = sort $ Config.keys name (config db)
+      isKey k x    = (x == k || startswith (k ++ "_") x)
+      userSuffixes = map (drop 4) $ filter (isKey "user") knownKeys
+      users        = map (lookup . ("user"++)) userSuffixes
+      passwords    = map (lookup . ("password"++)) userSuffixes
+      urls         = map (lookup . ("url"++)) userSuffixes
+      lookup k     = Config.lookup name k (config db)
+
+      makeEntry (us, pw, ur) = Entry {
+           entryName = name
+         , entryUser = us
+         , entryPassword = pw
+         , entryUrl = ur
+         }
+
+buildEntrySuffix :: Database -> String -> String
+buildEntrySuffix db name = 
+  newSuffixes !! 0
+    where
+      knownKeys    = sort $ Config.keys name (config db)
+      isKey k x    = (x == k || startswith (k ++ "_") x)
+      userSuffixes = map (drop 4) $ filter (isKey "user")     knownKeys
+      passSuffixes = map (drop 8) $ filter (isKey "password") knownKeys
+      urlSuffixes  = map (drop 3) $ filter (isKey "url") knownKeys
+      suffixes     = userSuffixes ++ passSuffixes ++ urlSuffixes
+      newSuffixes  = dropWhile (`elem` suffixes) ("":map (("_" ++) . show) [1..])
+
+findUser :: [Entry] -> String -> Maybe Entry
+findUser []     _  = Nothing
+findUser (x:xs) u = if (entryUser x) == Just u
+                       then Just x
+                       else findUser xs u
 
 hasEntry :: String -> Database -> Bool
 hasEntry name = Config.hasSection name . config
@@ -47,19 +84,24 @@ hasEntry name = Config.hasSection name . config
 entryNames :: Database -> [String]
 entryNames = Config.sections . config
 
-addEntry :: Database -> Entry -> Either String Database
-addEntry db entry =
+addEntry :: Database -> Entry -> Bool -> Either String Database
+addEntry db entry forceAdd =
   case hasEntry name db of
-    True  -> Left $ printf "Entry with name \"%s\" already exists!" name
-    False -> Right db {config = insertEntry entry $ config db}
+    True  -> 
+      if forceAdd && not (isJust $ findUser (getEntries db name) (fromJust $ entryUser entry))
+         then Right $ doInsert
+         else Left  $ printf "Entry with name \"%s\" already exists!" name
+    False -> Right  $ doInsert
   where
-    name      = entryName entry
+    name  = entryName entry
+    ni = buildEntrySuffix db name
+    doInsert = db {config = insertEntry entry ni $ config db}
 
-insertEntry :: Entry -> Config -> Config
-insertEntry entry =
-    mInsert "user" user
-  . mInsert "password" password
-  . mInsert "url" url
+insertEntry :: Entry -> String-> Config -> Config
+insertEntry entry ni =
+    mInsert ("user" ++ ni)     user
+  . mInsert ("password" ++ ni) password
+  . mInsert ("url" ++ ni)      url
   where
     insert = Config.insert $ entryName entry
     mInsert k = maybe id (insert k)

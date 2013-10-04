@@ -18,6 +18,7 @@ data Options = Options {
   , passwordOnly  :: Bool
   , gpgOptions    :: [String]
   , dontOpen      :: Bool
+  , forceAdd      :: Bool
   } deriving Show
 
 defaultOptions :: Options
@@ -29,6 +30,7 @@ defaultOptions  = Options {
   , passwordOnly  = False
   , gpgOptions    = []
   , dontOpen      = False
+  , forceAdd      = False
   }
 
 options :: [OptDescr (Options -> Options)]
@@ -43,12 +45,13 @@ options = [
   , Option []     ["unlock"]  (NoArg  (\  opts -> opts { mode = ReleaseLock}))      "release write lock for database"
 
   , Option []     ["dbfile"]  (ReqArg (\s opts -> opts { databaseFile = s }) "FILE")  "file where passwords are stored;\ndefaults to ~/.pwsafe/db"
-  , Option []     ["user"]    (ReqArg (\s opts -> opts { userName = Just s }) "USER") "specify a username to be used for a new entry;\nthis option is to be used with --add"
+  , Option []     ["user"]    (ReqArg (\s opts -> opts { userName = Just s }) "USER") "specify a username to be used for an entry;\nthis option is to be used with --add or -q"
   , Option ['n']  []          (ReqArg (\s opts -> opts { repeatCount = (Just . read) s }) "NUMBER") "copy password n times to clipboard;\ndefaults to 1"
   , Option []     ["password-only"]
                               (NoArg  (\  opts -> opts { passwordOnly = True}))       "only copy password to clipboard"
   , Option ['g']  []          (ReqArg (\s opts -> opts { gpgOptions = (gpgOptions opts) ++ [s]}) "GPG Option") "add a GPG option (repeat to add multiple)"
   , Option ['d']  []          (NoArg  (\  opts -> opts { dontOpen = True })) "don't open a browser when using -q"
+  , Option ['A']  []          (NoArg  (\  opts -> opts { forceAdd = True })) "force add a new account"
   ]
 
 defaultDatabaseFile :: IO String

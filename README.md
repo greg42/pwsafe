@@ -92,6 +92,18 @@ If you want to log in to niftyservice again, proceed as follows.
  5. pwsafe exits, and you can proceed with the login.
 
 
+Using multiple accounts per service
+-----------------------------------
+
+pwsafe allows you to add more than just one user account per service. In order
+to do so, you have to supply the -A option when adding a second user account.
+When you query the database, pwsafe will either copy the credentials into the
+paste buffer (if there is only one account for the respective service) or write
+a list of known usernames to stdout and exit with code 2. You can supply the
+--user parameter when querying, so that pwsafe knows which entry in the database
+you would like to have. 
+
+
 Changing or deleting an entry in the database
 ---------------------------------------------
 
@@ -112,11 +124,14 @@ password.
     user=rwDJEs5J
     password=XArG9R4QBDwR7ceCVjyV
     url=http://www.niftyservice.com
+    user_1=another_user
+    password=1=BLABLA
+    url=http://www.niftyservice.com
 
-Only the "name" and "password" fields are required. "user" and "url" are
-optional.  If the url field is not present, pwsafe will not invoke your web
-browser on query.  If the user field is not present, pwsafe will only provide
-the password to paste on query.
+Only the "name" (i.e., section name) and "password" fields are required. "user"
+and "url" are optional.  If the url field is not present, pwsafe will not invoke
+your web browser on query.  If the user field is not present, pwsafe will only
+provide the password to paste on query.
 
 
 Command line options
@@ -138,11 +153,11 @@ Command line options
                  --unlock       release write lock for database
                  --dbfile=FILE  file where passwords are stored;
                                 defaults to ~/.pwsafe/db
-                 --user=USER    specify a username to be used for a new entry;
-                                this option is to be used with --add
+                 --user=USER    specify a username to be used for an entry;
+                                this option is to be used with --add or -q
       -n NUMBER                 copy password n times to clipboard;
                                 defaults to 1
                  --password-only  only copy password to clipboard
       -g GPG Option             add a GPG option (repeat to add multiple)
       -d                        don't open a browser when using -q
-
+      -A                        force add a new account

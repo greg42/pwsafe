@@ -23,6 +23,7 @@ executable pwsafe
     , deepseq
     , unix
     , config-ng
+    , MissingH
   main-is:
       Main.hs
 

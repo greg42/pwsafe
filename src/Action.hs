@@ -2,14 +2,17 @@
 module Action (runAction, mkEnv, add, query, list, edit, dump) where
 
 import           Prelude hiding (putStrLn, putStr)
+import qualified Prelude
 import           Control.Monad (replicateM_, unless)
 import           Control.Monad.Trans.Reader
 import           Control.Monad.IO.Class (liftIO)
 import           System.IO (hPutStr, hClose)
 import qualified System.IO as IO
+import           System.Exit
 import           Control.DeepSeq (deepseq)
 import           Text.Printf
 import           Data.Foldable (forM_)
+import           Data.Maybe (mapMaybe)
 
 import           Util (nameFromUrl, run, withTempFile, match_)
 import           Database (Database, Entry(..))
@@ -37,6 +40,10 @@ mkEnv conf cipher h = Env {
 , envCipher = cipher
 , envHandle = h
 }
+
+doIO :: IO a -> ActionM a
+doIO action = ActionM $ do
+   liftIO action
 
 liftAction :: (Env -> IO a) -> ActionM a
 liftAction action = ActionM $ do
@@ -70,8 +77,8 @@ saveDatabase :: Database -> ActionM ()
 saveDatabase = encrypt . Database.render
 
 
-add :: String -> Maybe String -> ActionM ()
-add url_ mUser = do
+add :: String -> Maybe String -> Bool -> ActionM ()
+add url_ mUser force = do
   user <- maybe genUser return mUser
   password_ <- genPassword
   addEntry $ Entry {entryName = nameFromUrl url_, entryUser = Just user, entryPassword = Just password_, entryUrl = Just url_}
@@ -88,16 +95,16 @@ add url_ mUser = do
       -- gets an error before he has to enter his password.
       entry `deepseq` do
         db <- openDatabase
-        case Database.addEntry db entry of
+        case Database.addEntry db entry force of
           Left err  -> error err
           Right db_ -> saveDatabase db_
 
-query :: String -> Int -> Bool -> Bool -> ActionM ()
-query kw n passwordOnly noOpen = do
+query :: String -> Maybe String -> Int -> Bool -> Bool -> ActionM ()
+query kw mUser n passwordOnly noOpen = do
   db <- openDatabase
-  case Database.lookupEntry db kw of
-    Left err -> putStrLn err
-    Right x  -> x `deepseq` do -- force pending exceptions early..
+  case Database.lookupEntryUser db kw mUser of
+    Left err     -> putStrLn err >> (doIO $ exitWith (ExitFailure 1))
+    Right (x:[]) -> x `deepseq` do -- force pending exceptions early..
       unless passwordOnly $ do
         forM_ (entryUrl x) $ \url -> do
           putStrLn url
@@ -106,6 +113,9 @@ query kw n passwordOnly noOpen = do
           copyToClipboard
       forM_ (entryPassword x) $
         replicateM_ n . copyToClipboard
+    Right xs -> do
+      mapM_ putStrLn (mapMaybe entryUser xs)
+      doIO $ exitWith (ExitFailure 2)
   where
     open = liftAction1 (Config.openUrl . envConfig)
 

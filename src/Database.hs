@@ -2,7 +2,7 @@ module Database (Database, empty, parse, render, addEntry, Entry(..), lookupEntr
 
 import           Prelude hiding (lookup)
 
-import           Data.List (intercalate, sort)
+import           Data.List (intercalate, sort, nub)
 import           Data.String.Utils
 import           Data.Maybe
 import           Control.DeepSeq
@@ -48,9 +48,12 @@ getEntries db name =
       knownKeys    = sort $ Config.keys name (config db)
       isKey k x    = (x == k || startswith (k ++ "_") x)
       userSuffixes = map (drop 4) $ filter (isKey "user") knownKeys
-      users        = map (lookup . ("user"++)) userSuffixes
-      passwords    = map (lookup . ("password"++)) userSuffixes
-      urls         = map (lookup . ("url"++)) userSuffixes
+      passSuffixes = map (drop 8) $ filter (isKey "password") knownKeys
+      urlSuffixes  = map (drop 3) $ filter (isKey "url") knownKeys
+      suffixes     = nub $ sort $ userSuffixes ++ passSuffixes ++ urlSuffixes
+      users        = map (lookup . ("user"++)) suffixes
+      passwords    = map (lookup . ("password"++)) suffixes
+      urls         = map (lookup . ("url"++)) suffixes
       lookup k     = Config.lookup name k (config db)
 
       makeEntry (us, pw, ur) = Entry {

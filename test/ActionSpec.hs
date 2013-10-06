@@ -40,7 +40,7 @@ pwsafe args db = do
   encrypt c db
   k <- K.newKnob ""
   K.withFileHandle k "knob.txt" WriteMode $ \h -> do
-    Run.run (conf clipboardSink) (const c) h (words args)
+    Run.run (conf clipboardSink) (const $ const c) h (words args)
   db_ <- Cipher.decrypt c
   out <- B.unpack `fmap` K.getContents k
   clipboard <- clipboardAccessor

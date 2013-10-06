@@ -49,7 +49,8 @@ options = [
   , Option ['n']  []          (ReqArg (\s opts -> opts { repeatCount = (Just . read) s }) "NUMBER") "copy password n times to clipboard;\ndefaults to 1"
   , Option []     ["password-only"]
                               (NoArg  (\  opts -> opts { passwordOnly = True}))       "only copy password to clipboard"
-  , Option ['g']  []          (ReqArg (\s opts -> opts { gpgOptions = (gpgOptions opts) ++ [s]}) "GPG Option") "add a GPG option (repeat to add multiple)"
+  , Option ['g']  ["--gpg-option"]
+                              (ReqArg (\s opts -> opts { gpgOptions = (gpgOptions opts) ++ [s]}) "GPG Option") "add a GPG option (repeat to add multiple)"
   , Option ['d']  []          (NoArg  (\  opts -> opts { dontOpen = True })) "don't open a browser when using -q"
   , Option ['A']  []          (NoArg  (\  opts -> opts { forceAdd = True })) "force add a new account"
   ]

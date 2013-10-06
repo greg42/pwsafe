@@ -32,3 +32,10 @@ spec = do
       opts <- Options.get ["--add", "foo", "--help", "--query", "baz"]
       Options.mode opts `shouldBe` Query "baz"
 
+    it "recognizes -g" $ do
+      opts <- Options.get ["-g", "foo"]
+      Options.gpgOptions opts `shouldBe` ["foo"]
+
+    it "accepts multiple -g options" $ do
+      opts <- Options.get ["-g", "foo", "-g", "bar"]
+      Options.gpgOptions opts `shouldBe` ["foo", "bar"]

@@ -2,19 +2,24 @@
 module Lock (acquire, release) where
 
 import           System.Posix.Files (ownerReadMode, ownerWriteMode, unionFileModes)
-import           System.Posix.Semaphore (semOpen, OpenSemFlags (..), semUnlink)
-import qualified Control.Exception as E
+import           System.Posix.Semaphore (semOpen, OpenSemFlags (..), 
+                                         semPost, semTryWait)
 
 -- | Try to acquire the lock, return `True` on success
 acquire :: IO Bool
-acquire = (semOpen "/pwsafe" (OpenSemFlags True True) readWriteMode 0 >> return True) `E.catch` handlerFalse
+acquire = do
+   s <- semOpen "/pwsafe" (OpenSemFlags True False) readWriteMode 1
+   semTryWait s
   where
     readWriteMode = ownerReadMode `unionFileModes` ownerWriteMode
 
 -- | Release the lock, return `True` on success
 release :: IO Bool
-release = (semUnlink "/pwsafe" >> return True) `E.catch` handlerFalse
+release = do
+   s <- semOpen "/pwsafe" (OpenSemFlags True False) readWriteMode 1
+   free <- semTryWait s
+   semPost s
+   return $ not free
+  where
+    readWriteMode = ownerReadMode `unionFileModes` ownerWriteMode
 
--- | Return `False` on `E.SomeException`
-handlerFalse :: E.SomeException -> IO Bool
-handlerFalse = const $ return False

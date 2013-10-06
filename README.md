@@ -139,25 +139,61 @@ Command line options
 
     Usage: pwsafe [OPTION]...
 
-                 --help         display this help and exit
-      -a URL     --add=URL      add a new entry to the database; the password is
-                                always automatically generated; the username is
-                                generated unless --user is specified
-      -q TERM    --query=TERM   lookup a password, the term must match exactly one
-                                entry
-      -l[TERM]   --list[=TERM]  list all entries matching the given term
-      -e         --edit         invoke vim to edit the database using sensible
-                                defaults (no backup, no swapfile etc)
-                 --dump         dump database to stdout
-                 --lock         acquire write lock for database
-                 --unlock       release write lock for database
-                 --dbfile=FILE  file where passwords are stored;
-                                defaults to ~/.pwsafe/db
-                 --user=USER    specify a username to be used for an entry;
-                                this option is to be used with --add or -q
-      -n NUMBER                 copy password n times to clipboard;
-                                defaults to 1
+                 --help           display this help and exit
+      -a URL     --add=URL        add a new entry to the database; the password is
+                                  always automatically generated; the username is
+                                  generated unless --user is specified
+      -q TERM    --query=TERM     lookup a password, the term must match exactly one
+                                  entry
+      -l[TERM]   --list[=TERM]    list all entries matching the given term
+      -e         --edit           invoke vim to edit the database using sensible
+                                  defaults (no backup, no swapfile etc)
+                 --dump           dump database to stdout
+                 --lock           acquire write lock for database
+                 --unlock         release write lock for database
+                 --dbfile=FILE    file where passwords are stored;
+                                  defaults to ~/.pwsafe/db
+                 --user=USER      specify a username to be used for an entry;
+                                  this option is to be used with --add or -q
+      -n NUMBER                   copy password n times to clipboard;
+                                  defaults to 1
                  --password-only  only copy password to clipboard
-      -g GPG Option             add a GPG option (repeat to add multiple)
-      -d                        don't open a browser when using -q
-      -A                        force add a new account
+      -g GPG Option               add a GPG option (repeat to add multiple)
+      -d                          don't open a browser when using -q
+      -A                          force add a new account
+
+Development
+===========
+
+pwsafe is primarily here to serve my needs.  If we can extend it in a way that
+makes it more useful for you and still serves my needs, even better!
+
+Make sure that the test suite passes with your changes and add tests for new
+code.
+
+### Running the tests
+
+First make sure that you have the latest version of `cabal-install`:
+
+    $ cabal update && cabal install cabal-install
+
+Make sure that `~/.cabal/bin/` is on your `PATH`.
+
+Run the tests:
+
+    $ cabal install --enable-tests --dependencies-only
+    $ cabal test
+
+### Running the tests during development
+
+During development you want to run the test with GHCi.  This is much faster and
+provides better feedback:
+
+    $ chmod og-w .ghci
+    $ ghci test/Spec.hs
+    *Main> :main
+
+After making changes, run:
+
+    *Main> :reload
+    *Main> :main

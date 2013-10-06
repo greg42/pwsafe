@@ -38,7 +38,7 @@ instance Arbitrary DatabaseFile where
   shrink (DatabaseFile _ xs) = [ dbFromList (xs \\ [x]) | x <- xs ]
 
 addEntry :: Entry -> Database -> Database
-addEntry e db = either error id $ Database.addEntry db e
+addEntry e db = either error id $ Database.addEntry db e False
 
 entry :: String -> String -> String -> String -> Entry
 entry name user password url = Database.Entry name (Just user) (Just password) (Just url)
@@ -113,10 +113,10 @@ spec = do
         "user=foo"
         "password=bar"
         "url=http://example.com"
-      lookupEntry db "example.com" `shouldBe` Right (entry "example.com" "foo" "bar" "http://example.com")
+      lookupEntryUser db "example.com" Nothing `shouldBe` Right ([entry "example.com" "foo" "bar" "http://example.com"])
 
-    it "works on a database with arbitrary entries" $
+    it "works on a database with arbitrary unique entries" $
       property $ \(DatabaseFile input xs) ->
         (not . null) xs ==> do
           x <- elements xs
-          return $ lookupEntry (parse input) (entryName x) == Right x
+          return $ lookupEntryUser (parse input) (entryName x) Nothing == Right [x]

@@ -73,7 +73,7 @@ buildEntrySuffix db name =
       passSuffixes = map (drop 8) $ filter (isKey "password") knownKeys
       urlSuffixes  = map (drop 3) $ filter (isKey "url") knownKeys
       suffixes     = userSuffixes ++ passSuffixes ++ urlSuffixes
-      newSuffixes  = dropWhile (`elem` suffixes) ("":map (("_" ++) . show) [1..])
+      newSuffixes  = dropWhile (`elem` suffixes) ("":map (("_" ++) . show) ([1..] :: [Int]))
 
 findUser :: [Entry] -> String -> Maybe Entry
 findUser []     _  = Nothing
